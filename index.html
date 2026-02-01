@@ -731,6 +731,70 @@ $(document).ready(function() {
     
 
   
-
+<!-- 创建文件：source/_data/body-end.njk -->
+<script>
+// Next主题MathJax重复渲染修复
+(function() {
+  // 等待页面加载完成
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fixMathJaxDuplicates);
+  } else {
+    fixMathJaxDuplicates();
+  }
+  
+  function fixMathJaxDuplicates() {
+    // 查找所有包含MathJax的容器
+    const containers = document.querySelectorAll('.post-body, .post-content');
+    
+    containers.forEach(container => {
+      // 查找所有MathJax元素
+      const mathjaxElements = container.querySelectorAll('[class*="MathJax"], mjx-container');
+      
+      mathjaxElements.forEach(mathjax => {
+        // 获取相邻的文本节点
+        const walker = document.createTreeWalker(
+          container,
+          NodeFilter.SHOW_TEXT,
+          null,
+          false
+        );
+        
+        let node;
+        const nodesToRemove = [];
+        
+        while (node = walker.nextNode()) {
+          if (node.textContent.includes('$')) {
+            // 检查这个文本节点是否靠近MathJax元素
+            const range = document.createRange();
+            range.selectNode(node);
+            const rect = range.getBoundingClientRect();
+            
+            const mathjaxRect = mathjax.getBoundingClientRect();
+            
+            // 如果文本节点与MathJax元素重叠或接近，删除它
+            if (rectsOverlap(rect, mathjaxRect)) {
+              nodesToRemove.push(node);
+            }
+          }
+        }
+        
+        // 删除找到的节点
+        nodesToRemove.forEach(node => {
+          node.parentNode.removeChild(node);
+        });
+      });
+    });
+    
+    console.log('客户端MathJax重复渲染修复完成');
+  }
+  
+  function rectsOverlap(rect1, rect2) {
+    return !(rect1.right < rect2.left || 
+             rect1.left > rect2.right || 
+             rect1.bottom < rect2.top || 
+             rect1.top > rect2.bottom);
+  }
+})();
+</script>
 </body>
 </html>
